@@ -1,5 +1,5 @@
-# Base de dados (baixada pelo comando do README, não vai para o git)
-dados/
+# Cache criado pelo download do Hugging Face (as fotos e anotações vão para o git)
+dados/**/.cache/
 
 # Ambiente virtual e cache do Python
 .venv/

@@ -24,27 +24,50 @@ Parte utilizada: fotografias completas de **validação** e **teste** da classe 
 
 As anotações são usadas apenas como referência de avaliação, nunca como entrada da detecção.
 
+### Dados incluídos no repositório
+
+O recorte usado no trabalho (cerca de 52 MB) já vem no repositório, em `dados/grain_detection/`.
+Não é preciso baixar nada por fora. Os arquivos mantêm **os mesmos nomes e a mesma estrutura
+da base original**, porque as anotações COCO referenciam as fotos pelo nome do arquivo
+(`file_name`) e isso permite conferir cada imagem na fonte.
+
+```
+dados/grain_detection/
+  README.md            descrição original da base (autoria e licença)
+  LICENSE.md           licença CC BY-NC 4.0
+  classes.json         lista de classes (peanuts = id 1)
+  annotations/
+    val_photos.json    anotações COCO das fotos completas de validação (todas as classes)
+    test_photos.json   anotações COCO das fotos completas de teste (todas as classes)
+  photos/
+    val/peanuts_*.jpg  11 fotos de validação
+    test/peanuts_*.jpg 11 fotos de teste
+```
+
+A redistribuição deste recorte segue a licença CC BY-NC 4.0 da base: uso não comercial,
+com atribuição ao autor (ver `dados/grain_detection/README.md` e `LICENSE.md`).
+
 ## Instalação
 
-Requer Python 3.10 ou superior. Na raiz do repositório:
+Requer Python 3.10 ou superior.
 
 ```bash
+git clone https://github.com/cicerocalsing/TrabalhoGrauBIoT.git
+cd TrabalhoGrauBIoT
 py -m venv .venv
 .venv\Scripts\pip install -r requirements.txt
 ```
 
-Download somente das fotos de amendoim e das anotações (cerca de 40 MB):
-
-```bash
-.venv\Scripts\hf download niru-5/manama_course_dataset_grain_detection --repo-type dataset --local-dir dados/grain_detection --include "photos/val/peanuts_*" --include "photos/test/peanuts_*" --include "annotations/*" --include "classes.json" --include "README.md" --include "LICENSE.md"
-```
+Todos os comandos abaixo devem ser executados **de dentro da pasta `TrabalhoGrauBIoT`**.
 
 ## Estrutura
 
 ```
+dados/              recorte da base (fotos de amendoim + anotações)
 src/
-  config.py         parâmetros do pipeline
-  dados_coco.py     leitura das anotações COCO
+  config.py             parâmetros do pipeline
+  dados_coco.py         leitura das anotações COCO
+  explorar_anotacoes.py desenha as caixas anotadas nas fotos de validação
   segmentacao.py    separação objeto/fundo
   rotulagem.py      rotulagem de componentes conexos (BFS e duas passagens, viz. 4/8)
   medicoes.py       área, largura, altura, razão de aspecto
@@ -59,7 +82,15 @@ docs/               enunciado do trabalho
 
 ## Execução
 
-_A preencher conforme a implementação._
+Exploração das anotações (desenha as caixas da base nas fotos de validação e imprime estatísticas):
+
+```bash
+.venv\Scripts\python src\explorar_anotacoes.py
+```
+
+Saída: `resultados/exploracao/peanuts_XXXX_anotada.jpg`.
+
+_As demais etapas serão adicionadas conforme a implementação._
 
 ## Referências
 
