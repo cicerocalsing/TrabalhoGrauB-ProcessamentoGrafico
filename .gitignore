@@ -1,0 +1,13 @@
+# Base de dados (baixada pelo comando do README, não vai para o git)
+dados/
+
+# Ambiente virtual e cache do Python
+.venv/
+__pycache__/
+*.pyc
+
+# Arquivos do sistema/editor
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
