@@ -1,4 +1,8 @@
-# Parâmetros do pipeline (caminhos, tamanho de redimensionamento, limiares,
-# kernels da morfologia, área mínima/máxima, conectividade).
-# Cada valor deve ter um comentário explicando o motivo da escolha.
-# Os valores são ajustados SOMENTE com as fotos de validação.
+from pathlib import Path
+
+RAIZ = Path(__file__).resolve().parent.parent
+PASTA_DADOS = RAIZ / "dados" / "grain_detection"
+PASTA_RESULTADOS = RAIZ / "resultados"
+DIVISOES_VALIDAS = ("val", "test")
+ID_PEANUTS = 1
+COR_ANOTACAO = (0, 0, 255)
