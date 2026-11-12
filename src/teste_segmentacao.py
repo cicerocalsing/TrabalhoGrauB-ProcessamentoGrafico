@@ -15,9 +15,12 @@ else:
     print(f"Testando a imagem: {primeiro_nome}")
 
     mascara = segmentar_amendoins(imagem)
+    
+    cv2.namedWindow("Original", cv2.WINDOW_NORMAL)
+    cv2.imshow("Original", mascara)
 
-    cv2.imshow("Imagem Original", imagem)
-    cv2.imshow("Mascara Segmentada (HSV + Otsu)", mascara)
+# Define a posição da janela (x, y)
+    cv2.moveWindow("Original", 100, 100)
 
     cv2.waitKey(0)
     cv2.destroyAllWindows()
