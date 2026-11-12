@@ -8,37 +8,37 @@ import numpy as np
 def segmentar_amendoins(imagem):
     gray = cv2.cvtColor(imagem, cv2.COLOR_BGR2GRAY)
 
-    # suaviza imagem, melhora um pouquinho a limiarização
-    blur = cv2.GaussianBlur(gray, (5,5), 0)
+    # ou o gaussian ou o median, ve qual fica melhor
+    #blur = cv2.GaussianBlur(gray, (11,11), 0)
+    blur = cv2.medianBlur(gray, 11)
 
-    # limiarização adaptativa
-    filtro = cv2.adaptiveThreshold(
+    """filtro = cv2.adaptiveThreshold(
         blur,
         255, # valor do objeto
         cv2.ADAPTIVE_THRESH_GAUSSIAN_C, # média local
         cv2.THRESH_BINARY_INV, # tipo de limiar. Se não tivesse INV ia ter fundo branco e obj preto
         31, # tamanho do bloco de comparação. Se for pequeno pega mais ruído. Deve ser ímpar
         4 # constante de rigorosidade. Quanto maior, menos ruídos, mas pode perder detalhes
-    )
+    )"""
+    filtro = cv2.Canny(blur, 8, 55)
 
 
-    # operações morfológicas
-    kernel = np.ones((3,3), np.uint8)
-    # remove ruídos pequenos envolta mas deteriora o amendoím
-    mascara = cv2.morphologyEx(filtro, cv2.MORPH_OPEN, kernel, iterations=1)
+    kernel = np.ones((2,2), np.uint8)
 
-    # reconstroi parte do amendoim deteriorado
-    mascara = cv2.morphologyEx(mascara, cv2.MORPH_CLOSE, kernel, iterations=2)
-    # --------- TESTAR COM ITERATIONS 1/3 e 1/1 ---------
+    mascara = cv2.morphologyEx(filtro, cv2.MORPH_CLOSE, kernel, iterations=1)
+    #mascara = cv2.morphologyEx(mascara, cv2.MORPH_OPEN, kernel, iterations=1)
+    #mascara = cv2.morphologyEx(mascara, cv2.dilate, kernel, iterations=1)
+    # mascara = cv2.morphologyEx(mascara, cv2.MORPH_ELLIPSE, kernel, iterations=1)
 
-
-    
-    # mediana para melhorar ruídos
-    mascara = cv2.medianBlur(mascara, 11)
+    """contornos, _ = cv2.findContours(
+        mascara,
+        cv2.RETR_EXTERNAL,
+        cv2.CHAIN_APPROX_SIMPLE,
+    )"""
 
     return mascara
 
-#    mascara_descolada = cv2.erode(mascara, kernel, iterations=1)
-#    kernel_grande = np.ones((7,7), np.uint8)
-#    mascara_solida = cv2.morphologyEx(filtro, cv2.MORPH_CLOSE, kernel_grande, iterations=1)
+#   mascara_descolada = cv2.erode(mascara, kernel, iterations=1)
     
+#   tentativa de open e close
+#   MORPH_ELYPSE
