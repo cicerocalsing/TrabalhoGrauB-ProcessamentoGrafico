@@ -52,13 +52,13 @@ com atribuição ao autor (ver `dados/grain_detection/README.md` e `LICENSE.md`)
 Requer Python 3.10 ou superior.
 
 ```bash
-git clone https://github.com/cicerocalsing/TrabalhoGrauBIoT.git
-cd TrabalhoGrauBIoT
+git clone https://github.com/cicerocalsing/TrabalhoGrauB-ProcessamentoGrafico.git
+cd TrabalhoGrauB-ProcessamentoGrafico
 py -m venv .venv
 .venv\Scripts\pip install -r requirements.txt
 ```
 
-Todos os comandos abaixo devem ser executados **de dentro da pasta `TrabalhoGrauBIoT`**.
+Todos os comandos abaixo devem ser executados **de dentro da pasta `TrabalhoGrauB-ProcessamentoGrafico`**.
 
 ## Estrutura
 
