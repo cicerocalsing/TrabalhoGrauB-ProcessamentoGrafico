@@ -5,6 +5,7 @@ from segmentacao import segmentar_amendoins
 divisao = "val"
 anotacoes = carregar_anotacoes(divisao)
 primeiro_nome = list(anotacoes.keys())[1]
+primeiro_nome = "peanuts_0055.jpg"
 
 caminho = caminho_foto(divisao, primeiro_nome)
 imagem = cv2.imread(str(caminho))
