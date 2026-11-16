@@ -1,0 +1,12 @@
+foto,fundo,largura,altura,componentes_brutos,contados,gabarito,erro,erro_absoluto,erro_relativo,tempo_segmentacao_s,tempo_rotulagem_s,tempo_medicao_s,tempo_total_s
+peanuts_0018.jpg,escuro,1500,1501,10,10,10,0,0,0.0,0.188,0.285,0.089,0.562
+peanuts_0039.jpg,escuro,1467,1467,27,27,27,0,0,0.0,0.021,0.439,0.213,0.673
+peanuts_0043.jpg,escuro,1484,1484,7,6,6,0,0,0.0,0.02,0.192,0.054,0.266
+peanuts_0046.jpg,escuro,1467,1467,14,14,14,0,0,0.0,0.018,0.284,0.114,0.415
+peanuts_0052.jpg,madeira,3072,4080,10,10,11,-1,1,0.0909,0.037,1.333,0.5,1.87
+peanuts_0055.jpg,madeira,3072,4080,18,18,26,-8,8,0.3077,0.038,1.74,0.852,2.63
+peanuts_0063.jpg,escuro,1498,1498,10,10,10,0,0,0.0,0.019,0.244,0.088,0.351
+peanuts_0064.jpg,escuro,1468,1468,24,24,24,0,0,0.0,0.018,0.389,0.192,0.599
+peanuts_0072.jpg,escuro,1482,1482,27,26,27,-1,1,0.037,0.019,0.423,0.203,0.645
+peanuts_0073.jpg,escuro,1516,1517,18,17,17,0,0,0.0,0.023,0.329,0.145,0.498
+peanuts_0074.jpg,escuro,1467,1467,21,19,19,0,0,0.0,0.018,0.358,0.154,0.53
