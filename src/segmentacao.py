@@ -8,6 +8,7 @@ import numpy as np
 FRACAO_CANTO = 1 / 20   # lado do quadrado de cada canto, em fração do maior lado
 LIMIAR_PRETO = 15       # brilho abaixo disso conta como preto (0 a 255)
 
+
 def tem_fundo_escuro(imagem):
 
     # Fotos de mesa escura são recortadas em círculo: os 4 cantos ficam pretos
@@ -71,3 +72,38 @@ def segmentar_amendoins(imagem):
     if tem_fundo_escuro(imagem):
         return segmentar_fundo_escuro(imagem)
     return segmentar_fundo_madeira(imagem)
+
+
+
+"""def segmentar_fundo_escuro(imagem):
+    gray = cv2.cvtColor(imagem, cv2.COLOR_BGR2GRAY)
+
+    # ou o gaussian ou o median, ve qual fica melhor
+    #blur = cv2.GaussianBlur(gray, (11,11), 0)
+    blur = cv2.medianBlur(gray, 11)
+
+    #filtro = cv2.adaptiveThreshold(
+    #    blur,
+    #    255, # valor do objeto
+    #    cv2.ADAPTIVE_THRESH_GAUSSIAN_C, # média local
+    #    cv2.THRESH_BINARY_INV, # tipo de limiar. Se não tivesse INV ia ter fundo branco e obj preto
+    #    31, # tamanho do bloco de comparação. Se for pequeno pega mais ruído. Deve ser ímpar
+    #    4 # constante de rigorosidade. Quanto maior, menos ruídos, mas pode perder detalhes
+    #)
+    filtro = cv2.Canny(blur, 8, 55)
+
+
+    kernel = np.ones((2,2), np.uint8)
+
+    mascara = cv2.morphologyEx(filtro, cv2.MORPH_CLOSE, kernel, iterations=1)
+    #mascara = cv2.morphologyEx(mascara, cv2.MORPH_OPEN, kernel, iterations=1)
+    #mascara = cv2.morphologyEx(mascara, cv2.dilate, kernel, iterations=1)
+    #mascara = cv2.morphologyEx(mascara, cv2.MORPH_ELLIPSE, kernel, iterations=1)
+
+    #contornos, _ = cv2.findContours(
+    #    mascara,
+    #    cv2.RETR_EXTERNAL,
+    #    cv2.CHAIN_APPROX_SIMPLE,
+    #)
+
+    return mascara
