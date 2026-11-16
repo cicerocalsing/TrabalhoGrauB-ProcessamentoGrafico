@@ -21,3 +21,14 @@ ID_PEANUTS = 1
 
 # Cor das caixas anotadas pela base (referência), no padrão BGR do OpenCV: vermelho
 COR_ANOTACAO = (0, 0, 255)
+
+# Cor das caixas encontradas pelo programa, no padrão BGR do OpenCV: verde
+COR_PROGRAMA = (0, 255, 0)
+
+# Filtro de regiões espúrias: componentes com área (em pixels) fora desta faixa são descartados
+# Os valores devem ser escolhidos usando APENAS as fotos de val
+AREA_MINIMA = 1000      # 0 = sem filtro (ainda a definir com o val)
+AREA_MAXIMA = None      # None = sem limite superior
+
+# Conectividade padrão da rotulagem de componentes conexos (4 ou 8)
+CONECTIVIDADE_PADRAO = 8
