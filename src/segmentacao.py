@@ -106,4 +106,4 @@ def segmentar_amendoins(imagem):
     #    cv2.CHAIN_APPROX_SIMPLE,
     #)
 
-    return mascara
+    return mascara"""
