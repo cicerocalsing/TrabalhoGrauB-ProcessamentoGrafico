@@ -32,3 +32,70 @@ AREA_MAXIMA = None      # None = sem limite superior
 
 # Conectividade padrão da rotulagem de componentes conexos (4 ou 8)
 CONECTIVIDADE_PADRAO = 8
+
+# Avaliação por localização: IoU mínimo para uma caixa do programa contar como acerto
+# 0.5 é o valor mais usado em detecção de objetos (padrão do PASCAL VOC)
+LIMIAR_IOU = 0.5
+
+
+
+# ---------------------------------------------------------------------------
+# Investigação experimental
+# ---------------------------------------------------------------------------
+
+# Critério de sucesso definido ANTES de rodar o experimento:
+# um tipo de fundo é considerado "resolvido só com filtros" se o F1 por localização for >= 0.80
+CRITERIO_F1 = 0.80
+
+
+# ---------------------------------------------------------------------------
+# Segmentação: parâmetros escolhidos olhando apenas as fotos de val
+# ---------------------------------------------------------------------------
+
+# Detecção do tipo de fundo
+# As fotos de prato escuro são recortadas em círculo, então os quatro cantos ficam pretos
+FRACAO_CANTO = 1 / 20           # lado do quadrado analisado em cada canto, em fração do maior lado da foto
+LIMIAR_PRETO = 15               # brilho (0 a 255) abaixo do qual o pixel conta como preto
+FRACAO_CANTOS_PRETOS = 0.5      # fração mínima de pixels pretos nos cantos para ser "fundo escuro"
+
+# Fundo escuro (prato): limiarização do canal b do LAB (azul <-> amarelo)
+# O amendoim é amarelado e o prato é neutro, então o amendoim tem b mais alto
+KERNEL_SUAVIZACAO_COR = 7       # filtro gaussiano 7x7 no canal b antes do Otsu (remove granulação)
+
+# Remoção das sombras entre grãos encostados (canal L do LAB = brilho)
+# Um pixel é sombra se for bem mais escuro que a média da vizinhança
+KERNEL_SUAVIZACAO_BRILHO = 5    # filtro gaussiano 5x5 no canal L antes da comparação
+SIGMA_VIZINHANCA_SOMBRA = 12    # desvio padrão do gaussiano que estima o brilho da vizinhança
+LIMIAR_SOMBRA = 10              # quanto mais escuro que a vizinhança o pixel precisa ser para virar sombra
+
+# Morfologia do fundo escuro
+KERNEL_MORFOLOGIA_ESCURO = 5    # elipse 5x5
+ITERACOES_ABERTURA = 2          # abertura: remove pontinhos de ruído e afina ligações entre grãos
+ITERACOES_FECHAMENTO = 1        # fechamento: tapa pequenos buracos dentro dos grãos
+
+# Fundo de madeira: os amendoins são achados pelas bordas (gradiente de Sobel)
+LARGURA_PROCESSAMENTO_MADEIRA = 1000   # largura (px) para a qual a foto é reduzida nesta etapa
+KERNEL_MEDIANA_MADEIRA = 11            # filtro de mediana no canal L: apaga os veios da madeira
+LIMIAR_GRADIENTE = 20                  # força mínima da borda (magnitude do Sobel)
+KERNEL_FECHAMENTO_BORDA = 15           # elipse que fecha falhas no contorno dos grãos
+KERNEL_ABERTURA_MADEIRA = 25           # elipse que remove bordas soltas (veios, sombras finas)
+
+
+# ---------------------------------------------------------------------------
+# Configurações comparadas na investigação experimental
+# ---------------------------------------------------------------------------
+
+# Estudo de ablação: cada configuração acrescenta uma etapa de filtro à anterior
+CONFIGURACOES = {
+    "C0": "Limiar simples: cinza + Otsu global",
+    "C1": "Cor + região de interesse: Otsu no canal adequado ao fundo, sem morfologia",
+    "C2": "Método completo de cada fundo: C1 + sombras/bordas + morfologia",
+    "C3": "C2 + separação de grãos encostados (transformada de distância + watershed)",
+}
+
+# Configuração usada quando nenhuma é escolhida (pipeline principal)
+CONFIGURACAO_PADRAO = "C2"
+
+# Separação de grãos encostados (C3)
+FATOR_AREA_GRANDE = 1.6     # só tenta separar componentes com área > 1.6 x a mediana das áreas da foto
+FRACAO_NUCLEO = 0.6         # núcleo de um grão: pixels com distância à borda > 60% da maior distância do componente
