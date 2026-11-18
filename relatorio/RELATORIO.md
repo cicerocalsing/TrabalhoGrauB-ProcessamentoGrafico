@@ -1,27 +1,10 @@
 # Relatório técnico
 
-
-# Pipeline
-O pipeline foi dividido em quatro diferentes funções para executar os filtros. As duas primeiras funções tem_fundo_escuro() e segmentar_amendoins() são funções auxiliares, elas servem para auxiliar a execução.
-A função tem_fundo_escuro() identifica o formato da imagem. Caso ela seja o fundo inteiro de madeira clara ela utiliza um filtro, caso contrário utiliza o outro filtro.
-O segmentar_amendoins() só faz a comparação de qual função deve executar.
-
-Chegando nos filtros em si há duas funções principais: segmentar_fundo_escuro() e segmentar_fundo_madeira().
-
-segmentar_fundo_escuro() - primeiro foi transformada a imagem de RGB (BGR) para LAB e eliminado o canal de transparência. Após isso foi feito um blur gaussiano e transformado a imagem em cinza. Depois disso ele limiariza a imagem e aplica outro blur para eliminar mais ruídos. Em seguida os amendoins são separados pelas pequenas sombras que tinham entre eles, então os que estavam bem grudados tem uma linha cortada entre eles, separando. Por fim é feito uma erosão com a função open seguida de dilatação em elipse, depois uma dilatação e erosão. Dessa forma, os ruídos que sobraram foram mínimos e os amendoins ficaram com poucos buracos dentro.
-
-segmentar_fundo_madeira() - primeiro foi feito um resize, porque a máquina que estava sendo utilizada no momento da criação estava com dificuldades técnicas e precisava do resize para aparecer na tela corretamente e realizar os testes. Como, após da criação do filtro, logo foram implementados os testes e análise a partir da função foi optado por deixar assim.
-
-No fluxo, foi feito uma mediana para remoção de ruídos na imagem transformada em LAB. Depois foi aplicado um magnitude com sobel para intensificar as bordas, um filtro de borda pra limiarizar de novo e um filtro de fundo. A limiarização de borda por último foi necessária, porque em alguns casos amendoins não fechavam o círculo e o preenchimento bitwise_not vazava. Por fim, foi feito uma morfologia que juntava borda e fundo ao mesmo tempo junto com uma abertura
-
-_A preencher: componente algorítmico, investigação, resultados, limitações e referências._
-
-
 # Relatório técnico — Inspeção e quantificação de amendoins com OpenCV
 
 **Disciplina:** Processamento Gráfico
-**Integrantes:** [Cícero Calsing, Leonardo kuhn, Kauan Gross]
-**Data:** [18/11/2026]
+**Integrantes:** Cícero Calsing, Leonardo kuhn, Kauan Gross
+**Data:** 18/11/2026
 
 ## 1. Problema e base de dados
 
@@ -53,7 +36,7 @@ de 50% dos pixels dos quatro cantos tiverem brilho < 15, a foto é de prato escu
 
 **Fundo escuro (prato):**
 1. Conversão para LAB e uso do canal **b** (azul ↔ amarelo), suavizado com gaussiano 7×7. O
-   amendoim é amarelado e o prato é neutro, então o canal b separa os dois sem depender da
+   amendoim é amarelado e o prato é neutro, então o canal b separa os doin=is sem depender da
    iluminação.
 2. **Otsu calculado só na região de interesse** (pixels que não são o preto dos cantos). Com os
    cantos incluídos, o Otsu separava "preto × prato" em vez de "prato × amendoim".
@@ -284,18 +267,28 @@ vezes mais lentas que as de val.
 
 ### 6.3 Onde o método funciona
 
-[inserir imagens: `resultados/test_C2_conectividade8/imagens/peanuts_0027_detectada.jpg` e
-`resultados/val_C2_conectividade8/imagens/peanuts_0039_detectada.jpg`]
+![Test 0027 (C2): fundo escuro, 42 de 42 amendoins, F1 = 1,00](../resultados/test_C2_conectividade8/imagens/peanuts_0027_detectada.jpg)
+
+*Figura 1 — Test, peanuts_0027 (C2, conectividade 8): fundo escuro, 42 de 42 amendoins detectados, F1 = 1,00, IoU médio 0,90.*
+
+![Val 0039 (C2): fundo escuro, 27 de 27 amendoins, F1 = 1,00](../resultados/val_C2_conectividade8/imagens/peanuts_0039_detectada.jpg)
+
+*Figura 2 — Val, peanuts_0039 (C2, conectividade 8): fundo escuro, 27 de 27 amendoins detectados, F1 = 1,00, IoU médio 0,90.*
 
 Fundo uniforme e de cor diferente do amendoim, iluminação homogênea e grãos espalhados ou com
 pouco contato: as caixas coincidem com as anotações (IoU médio ≈ 0,90).
 
 ### 6.4 Onde o método falha
 
-[inserir imagens:
-`resultados/test_C2_conectividade8/imagens/peanuts_0034_detectada.jpg`,
-`resultados/test_C2_conectividade8/imagens/peanuts_0009_detectada.jpg` e
-`resultados/val_C0_conectividade8/imagens/peanuts_0018_detectada.jpg`]
+
+![Test 0009 (C2): madeira, monte de grãos fundidos](../resultados/test_C2_conectividade8/imagens/peanuts_0009_detectada.jpg)
+
+*Figura 3 — Test, peanuts_0009 (C2, conectividade 8): madeira com 75 amendoins, a maioria encostados; 14 regiões detectadas, 70 amendoins perdidos (F1 = 0,11).*
+
+![Val 0018 (C0): limiar ingênuo detecta os cantos pretos](../resultados/val_C0_conectividade8/imagens/peanuts_0018_detectada.jpg)
+
+*Figura 4 — Val, peanuts_0018 (C0, conectividade 8): o Otsu global separa os cantos pretos do resto da foto; 4 regiões detectadas, nenhuma é amendoim (F1 = 0,00).*
+
 
 1. **Caixas infladas na madeira (test 0034):** os 7 amendoins foram encontrados e a contagem saiu
    exata, mas só 1 caixa teve IoU ≥ 0,5. Este caso mostra por que a contagem sozinha não mede a
@@ -327,9 +320,6 @@ do espaço de cor é a decisão mais importante do pipeline.
 - **Detecção do fundo por regra fixa:** depende de as fotos de prato terem os cantos pretos.
 - **Avaliação por caixa:** o IoU de caixas penaliza máscaras corretas com caixas um pouco maiores.
 
-[Opcional — trabalhos futuros: padronizar a escala das fotos; segmentação da madeira por
-diferença em relação a um modelo do fundo; separar montes com watershed sobre o gradiente da
-imagem original.]
 
 ## 9. Referências
 
@@ -340,4 +330,3 @@ imagem original.]
   `watershed` e `connectedComponents`. https://docs.opencv.org
 - EVERINGHAM, M. et al. The PASCAL Visual Object Classes (VOC) Challenge. *International
   Journal of Computer Vision*, 2010 (critério IoU ≥ 0,5).
-- [outros materiais consultados pelo grupo]
