@@ -52,13 +52,38 @@ com atribuição ao autor (ver `dados/grain_detection/README.md` e `LICENSE.md`)
 Requer Python 3.10 ou superior.
 
 ```bash
-git clone https://github.com/cicerocalsing/TrabalhoGrauBIoT.git
-cd TrabalhoGrauBIoT
-py -m venv .venv
-.venv\Scripts\pip install -r requirements.txt
+git clone https://github.com/cicerocalsing/TrabalhoGrauB-ProcessamentoGrafico.git
+cd TrabalhoGrauB-ProcessamentoGrafico
 ```
 
-Todos os comandos abaixo devem ser executados **de dentro da pasta `TrabalhoGrauBIoT`**.
+Criação do ambiente virtual e instalação das dependências (apenas na primeira vez):
+
+**macOS / Linux**
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+**Windows**
+
+```bash
+py -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+Todos os comandos abaixo devem ser executados **de dentro da pasta `TrabalhoGrauB-ProcessamentoGrafico`**
+e com o ambiente virtual **ativado** (aparece `(.venv)` no começo da linha do terminal).
+Ao abrir um terminal novo, é preciso ativar de novo:
+
+```bash
+source .venv/bin/activate      # macOS / Linux
+.venv\Scripts\activate         # Windows
+```
+
+Para desativar: `deactivate`.
 
 ## Estrutura
 
@@ -82,15 +107,74 @@ docs/               enunciado do trabalho
 
 ## Execução
 
+Os comandos usam `/` nos caminhos. No Windows, `python src\main.py` também funciona.
+
+### Pipeline principal
+
+Detecta, conta e mede os amendoins de todas as fotos de uma divisão, compara a contagem
+com as anotações da base e salva imagens anotadas e tabelas:
+
+```bash
+python src/main.py
+```
+
+Sem opções, processa a divisão **val** com conectividade 8 e os parâmetros de `src/config.py`.
+
+Opções:
+
+| Opção | Valores | Padrão | Descrição |
+|---|---|---|---|
+| `--divisao` | `val` ou `test` | `val` | fotos a processar |
+| `--conectividade` | `4` ou `8` | `8` | vizinhança da rotulagem de componentes conexos |
+| `--area-minima` | número (pixels) | valor de `AREA_MINIMA` em `config.py` | descarta componentes menores (ruído) |
+| `--area-maxima` | número (pixels) | sem limite | descarta componentes maiores |
+
+Exemplos:
+
+```bash
+python src/main.py --conectividade 4
+python src/main.py --area-minima 1000
+python src/main.py --conectividade 4 --area-minima 1000
+python src/main.py --divisao test        # somente na avaliação final
+python src/main.py --help                # lista todas as opções
+```
+
+> A divisão `test` deve ser processada apenas na avaliação final, depois que todos os parâmetros
+> tiverem sido definidos com a divisão `val`.
+
+Saída em `resultados/<divisao>_conectividade<4|8>/`:
+
+```
+imagens/peanuts_XXXX_detectada.jpg   gabarito em vermelho, programa em verde (numerado)
+resumo.csv                           uma linha por foto: contagem, gabarito, erro e tempo de cada etapa
+medicoes.csv                         uma linha por amendoim: área, caixa, aspecto, preenchimento e centro
+```
+
+O número de cada caixa verde na imagem corresponde à coluna `numero` do `medicoes.csv`.
+
+### Scripts auxiliares
+
 Exploração das anotações (desenha as caixas da base nas fotos de validação e imprime estatísticas):
 
 ```bash
-.venv\Scripts\python src\explorar_anotacoes.py
+python src/explorar_anotacoes.py
 ```
 
 Saída: `resultados/exploracao/peanuts_XXXX_anotada.jpg`.
 
-_As demais etapas serão adicionadas conforme a implementação._
+Visualização da máscara de segmentação de uma foto (abre uma janela; feche com qualquer tecla):
+
+```bash
+python src/teste_segmentacao.py
+```
+
+### Erros comuns
+
+| Mensagem | Causa | Solução |
+|---|---|---|
+| `ModuleNotFoundError: No module named 'cv2'` | ambiente virtual não ativado | ativar a `.venv` |
+| `can't open file 'src/main.py'` | terminal fora da pasta do projeto | `cd` até a pasta do projeto |
+| `command not found: python` | ambiente virtual não ativado | ativar a `.venv` ou usar `python3` |
 
 ## Referências
 
