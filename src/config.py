@@ -38,7 +38,6 @@ CONECTIVIDADE_PADRAO = 8
 LIMIAR_IOU = 0.5
 
 
-
 # ---------------------------------------------------------------------------
 # Investigação experimental
 # ---------------------------------------------------------------------------
@@ -49,36 +48,17 @@ CRITERIO_F1 = 0.80
 
 
 # ---------------------------------------------------------------------------
-# Segmentação: parâmetros escolhidos olhando apenas as fotos de val
+# Parâmetros das configurações C1 e C3 do experimento
+# A C2 é a segmentação de segmentacao.py, que tem os próprios parâmetros no código
+# Valores escolhidos olhando apenas as fotos de val
 # ---------------------------------------------------------------------------
 
-# Detecção do tipo de fundo
-# As fotos de prato escuro são recortadas em círculo, então os quatro cantos ficam pretos
-FRACAO_CANTO = 1 / 20           # lado do quadrado analisado em cada canto, em fração do maior lado da foto
-LIMIAR_PRETO = 15               # brilho (0 a 255) abaixo do qual o pixel conta como preto
-FRACAO_CANTOS_PRETOS = 0.5      # fração mínima de pixels pretos nos cantos para ser "fundo escuro"
+# C1 - fundo escuro: limiarização do canal b do LAB (o amendoim é amarelado e o prato é neutro)
+LIMIAR_PRETO = 15               # brilho (0 a 255) abaixo do qual o pixel é o preto dos cantos
+KERNEL_SUAVIZACAO_COR = 7       # filtro gaussiano 7x7 no canal b antes do Otsu
 
-# Fundo escuro (prato): limiarização do canal b do LAB (azul <-> amarelo)
-# O amendoim é amarelado e o prato é neutro, então o amendoim tem b mais alto
-KERNEL_SUAVIZACAO_COR = 7       # filtro gaussiano 7x7 no canal b antes do Otsu (remove granulação)
-
-# Remoção das sombras entre grãos encostados (canal L do LAB = brilho)
-# Um pixel é sombra se for bem mais escuro que a média da vizinhança
-KERNEL_SUAVIZACAO_BRILHO = 5    # filtro gaussiano 5x5 no canal L antes da comparação
-SIGMA_VIZINHANCA_SOMBRA = 12    # desvio padrão do gaussiano que estima o brilho da vizinhança
-LIMIAR_SOMBRA = 10              # quanto mais escuro que a vizinhança o pixel precisa ser para virar sombra
-
-# Morfologia do fundo escuro
-KERNEL_MORFOLOGIA_ESCURO = 5    # elipse 5x5
-ITERACOES_ABERTURA = 2          # abertura: remove pontinhos de ruído e afina ligações entre grãos
-ITERACOES_FECHAMENTO = 1        # fechamento: tapa pequenos buracos dentro dos grãos
-
-# Fundo de madeira: os amendoins são achados pelas bordas (gradiente de Sobel)
-LARGURA_PROCESSAMENTO_MADEIRA = 1000   # largura (px) para a qual a foto é reduzida nesta etapa
-KERNEL_MEDIANA_MADEIRA = 11            # filtro de mediana no canal L: apaga os veios da madeira
-LIMIAR_GRADIENTE = 20                  # força mínima da borda (magnitude do Sobel)
-KERNEL_FECHAMENTO_BORDA = 15           # elipse que fecha falhas no contorno dos grãos
-KERNEL_ABERTURA_MADEIRA = 25           # elipse que remove bordas soltas (veios, sombras finas)
+# C1 - fundo de madeira: limiarização do brilho (o amendoim é um pouco mais escuro que a madeira)
+KERNEL_MEDIANA_MADEIRA = 11     # filtro de mediana no canal L: apaga os veios da madeira
 
 
 # ---------------------------------------------------------------------------

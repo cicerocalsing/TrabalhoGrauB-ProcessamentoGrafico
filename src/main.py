@@ -3,13 +3,17 @@
 #
 # Fluxo de cada foto:
 #   ler -> segmentar -> rotular -> medir (filtro de área) -> contar
-#       -> comparar contagem com o gabarito -> desenhar caixas -> salvar
+#       -> comparar com o gabarito (contagem e IoU) -> desenhar caixas -> salvar
+#
+# Com a opção --experimento, em vez do pipeline é executada a investigação experimental
+# completa (classe Experimento, em experimento.py). Os parâmetros ficam fixos em config.py
 #
 # Uso (a partir da raiz do repositório):
-#   python src/main.py                         # val, configuração C2, conectividade 8
+#   python src/main.py                              # pipeline em val, conectividade 8
 #   python src/main.py --divisao val --conectividade 4
-#   python src/main.py --configuracao C3       # outra configuração da segmentação
-#   python src/main.py --divisao test          # só na avaliação final!
+#   python src/main.py --experimento                # investigação completa em val
+#   python src/main.py --divisao test               # só na avaliação final!
+#   python src/main.py --divisao test --experimento # investigação completa em test
 
 import argparse
 import csv
@@ -19,28 +23,25 @@ import cv2
 
 from avaliacao import avaliar_contagem, avaliar_deteccao, calcular_totais, classificar_erros
 from config import (AREA_MAXIMA, AREA_MINIMA, CONECTIVIDADE_PADRAO, CONFIGURACAO_PADRAO,
-                    CONFIGURACOES, COR_ANOTACAO, COR_PROGRAMA, DIVISOES_VALIDAS, LIMIAR_IOU,
-                    PASTA_DADOS, PASTA_RESULTADOS)
+                    COR_ANOTACAO, COR_PROGRAMA, DIVISOES_VALIDAS, LIMIAR_IOU, PASTA_DADOS,
+                    PASTA_RESULTADOS)
 from dados_coco import carregar_anotacoes
+from experimento import Experimento
 from medicoes import extrair_caixas, medir_componentes
 from rotulagem import rotular_componentes_conexos
 from segmentacao import segmentar_amendoins, tem_fundo_escuro
 from visualizacao import desenhar_caixas
 
 
-def processar_foto(imagem, configuracao, conectividade, area_minima, area_maxima):
-    
+def processar_foto(imagem, conectividade, area_minima, area_maxima):
+
     # Executa o pipeline numa foto e mede o tempo de cada etapa
     inicio = time.perf_counter()
-    
-    mascara = segmentar_amendoins(imagem, configuracao)
-    
+    mascara = segmentar_amendoins(imagem)
     t_segmentacao = time.perf_counter() - inicio
 
     inicio = time.perf_counter()
-    
     quantidade, rotulos = rotular_componentes_conexos(mascara, conectividade)
-    
     t_rotulagem = time.perf_counter() - inicio
 
     inicio = time.perf_counter()
@@ -58,13 +59,9 @@ def processar_foto(imagem, configuracao, conectividade, area_minima, area_maxima
     return medidas, quantidade, tempos
 
 
-def executar(divisao, configuracao, conectividade, area_minima, area_maxima, detalhar=True):
+def executar(divisao, conectividade, area_minima, area_maxima):
 
-    # Roda o pipeline em todas as fotos da divisão, grava imagens e CSVs e DEVOLVE as linhas
-    # do resumo (uma por foto), para que o experimento possa comparar várias execuções
-    # detalhar=True imprime a tabela de cada foto e os totais; False roda em silêncio    
     # Percorre as fotos da pasta
-    
     pasta_fotos = PASTA_DADOS / "photos" / divisao
     fotos = sorted(pasta_fotos.glob("peanuts_*.jpg"))
     if not fotos:
@@ -73,21 +70,20 @@ def executar(divisao, configuracao, conectividade, area_minima, area_maxima, det
     # O gabarito é usado só para comparar, nunca como entrada da detecção
     anotacoes = carregar_anotacoes(divisao)
 
-    # Uma pasta por configuração, para poder comparar execuções diferentes
-    pasta_saida = PASTA_RESULTADOS / f"{divisao}_{configuracao}_conectividade{conectividade}"
+    # Mesma pasta que o experimento usa para a configuração oficial (C2)
+    pasta_saida = PASTA_RESULTADOS / f"{divisao}_{CONFIGURACAO_PADRAO}_conectividade{conectividade}"
     pasta_imagens = pasta_saida / "imagens"
     pasta_imagens.mkdir(parents=True, exist_ok=True)
 
     linhas_resumo = []      # uma linha por foto
     linhas_medicoes = []    # uma linha por amendoim encontrado
 
-    if detalhar:
-        print(f"Divisão: {divisao} | configuração: {configuracao} | conectividade: {conectividade} | "
-              f"área mínima: {area_minima} | área máxima: {area_maxima}")
-        print(f"Segmentação: {CONFIGURACOES[configuracao]}")
-        print()
-        print(f"{'Foto':<18} {'Fundo':<8} {'Gabarito':>8} {'Contados':>8} {'Erro':>5} "
-              f"{'VP':>4} {'FP':>4} {'FN':>4} {'F1':>5} {'Tempo (s)':>9}")
+    print(f"Divisão: {divisao} | conectividade: {conectividade} | "
+          f"área mínima: {area_minima} | área máxima: {area_maxima}")
+    print()
+    print(f"{'Foto':<18} {'Fundo':<8} {'Gabarito':>8} {'Contados':>8} {'Erro':>5} "
+          f"{'VP':>4} {'FP':>4} {'FN':>4} {'F1':>5} {'Tempo (s)':>9}")
+
     for caminho in fotos:
         nome = caminho.name
         imagem = cv2.imread(str(caminho))
@@ -97,13 +93,14 @@ def executar(divisao, configuracao, conectividade, area_minima, area_maxima, det
         fundo = "escuro" if tem_fundo_escuro(imagem) else "madeira"
 
         medidas, componentes_brutos, tempos = processar_foto(
-            imagem, configuracao, conectividade, area_minima, area_maxima)
+            imagem, conectividade, area_minima, area_maxima)
 
+        # Avaliação por contagem
         caixas_gabarito = anotacoes.get(nome, {}).get("caixas", [])
         contados = len(medidas)
         gabarito = len(caixas_gabarito)
         avaliacao = avaliar_contagem(contados, gabarito)
-        
+
         # Avaliação por localização: cada caixa verde precisa coincidir (IoU >= LIMIAR_IOU)
         # com uma caixa vermelha diferente para contar como acerto
         caixas_programa = extrair_caixas(medidas)
@@ -111,7 +108,7 @@ def executar(divisao, configuracao, conectividade, area_minima, area_maxima, det
 
         # IoU de cada caixa do programa que casou: {índice da caixa: iou}
         iou_por_caixa = {i: iou for i, _, iou in deteccao["pares"]}
-        
+
         # Causa de cada erro: fusão de grãos, caixa imprecisa, ruído ou amendoim não detectado
         erros = classificar_erros(caixas_programa, caixas_gabarito, deteccao["pares"])
 
@@ -126,7 +123,7 @@ def executar(divisao, configuracao, conectividade, area_minima, area_maxima, det
             raise OSError(f"Falha ao salvar: {saida}")
 
         linhas_resumo.append({
-            "configuracao": configuracao,
+            "configuracao": CONFIGURACAO_PADRAO,
             "conectividade": conectividade,
             "foto": nome,
             "fundo": fundo,
@@ -161,7 +158,7 @@ def executar(divisao, configuracao, conectividade, area_minima, area_maxima, det
         for numero, medida in enumerate(medidas, start=1):
             x, y, largura, altura = medida["caixa"]
             centro_x, centro_y = medida["centro"]
-            
+
             # numero começa em 1, mas os índices das caixas começam em 0
             iou = iou_por_caixa.get(numero - 1, 0.0)
             linhas_medicoes.append({
@@ -180,24 +177,20 @@ def executar(divisao, configuracao, conectividade, area_minima, area_maxima, det
                 "iou": round(iou, 3),
             })
 
-        if detalhar:
-            print(f"{nome:<18} {fundo:<8} {gabarito:>8} {contados:>8} {avaliacao['erro']:>+5} "
-                  f"{deteccao['vp']:>4} {deteccao['fp']:>4} {deteccao['fn']:>4} "
-                  f"{deteccao['f1']:>5.2f} {tempos['total']:>9.2f}")
+        print(f"{nome:<18} {fundo:<8} {gabarito:>8} {contados:>8} {avaliacao['erro']:>+5} "
+              f"{deteccao['vp']:>4} {deteccao['fp']:>4} {deteccao['fn']:>4} "
+              f"{deteccao['f1']:>5.2f} {tempos['total']:>9.2f}")
 
     salvar_csv(pasta_saida / "resumo.csv", linhas_resumo)
     salvar_csv(pasta_saida / "medicoes.csv", linhas_medicoes)
 
-    if detalhar:
-        imprimir_totais(linhas_resumo)
-        print()
-        print(f"Resultados salvos em: {pasta_saida}")
-
-    return linhas_resumo
+    imprimir_totais(linhas_resumo)
+    print()
+    print(f"Resultados salvos em: {pasta_saida}")
 
 
 def salvar_csv(caminho, linhas):
-    
+
     # Grava uma lista de dicionários como CSV (cabeçalho = chaves do primeiro dicionário)
     if not linhas:
         return
@@ -208,7 +201,7 @@ def salvar_csv(caminho, linhas):
 
 
 def imprimir_totais(linhas_resumo):
-    
+
     # Mostra no terminal as métricas agregadas da divisão (calculadas em avaliacao.py)
     totais = calcular_totais(linhas_resumo)
 
@@ -243,18 +236,27 @@ def ler_argumentos():
     parser = argparse.ArgumentParser(description="Detecção, contagem e medição de amendoins")
     parser.add_argument("--divisao", choices=DIVISOES_VALIDAS, default="val",
                         help="val para ajuste, test só para a avaliação final (padrão: val)")
-    parser.add_argument("--configuracao", choices=list(CONFIGURACOES), default=CONFIGURACAO_PADRAO,
-                        help=f"configuração da segmentação (padrão: {CONFIGURACAO_PADRAO})")
     parser.add_argument("--conectividade", type=int, choices=(4, 8), default=CONECTIVIDADE_PADRAO,
                         help=f"vizinhança da rotulagem (padrão: {CONECTIVIDADE_PADRAO})")
     parser.add_argument("--area-minima", type=int, default=AREA_MINIMA,
                         help=f"descarta componentes menores que isto, em pixels (padrão: {AREA_MINIMA})")
     parser.add_argument("--area-maxima", type=int, default=AREA_MAXIMA,
                         help="descarta componentes maiores que isto, em pixels (padrão: sem limite)")
+    parser.add_argument("--experimento", action="store_true",
+                        help="roda a investigação completa (C0 a C3 x conectividade 4 e 8 "
+                             "e validação da rotulagem) em vez do pipeline")
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     argumentos = ler_argumentos()
-    executar(argumentos.divisao, argumentos.configuracao, argumentos.conectividade,
-             argumentos.area_minima, argumentos.area_maxima)
+
+    if argumentos.experimento:
+        # Investigação experimental: uma instância da classe Experimento para a divisão escolhida
+        experimento = Experimento(argumentos.divisao, argumentos.area_minima, argumentos.area_maxima)
+        experimento.executar()
+    else:
+        # Pipeline principal (segmentação de segmentacao.py)
+        executar(argumentos.divisao, argumentos.conectividade,
+                 argumentos.area_minima, argumentos.area_maxima)
+
