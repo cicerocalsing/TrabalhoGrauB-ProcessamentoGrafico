@@ -72,6 +72,31 @@ passam pelo filtro.
 - `medicoes.csv`: uma linha por amendoim (área, caixa, aspecto, preenchimento, centro, IoU);
 - `resultados/experimento/`: tabelas comparativas e validação da rotulagem.
 
+### 2.4 Arquivos da avaliação em test
+
+A avaliação final foi gerada uma única vez, com os parâmetros congelados, pelo comando
+`python src/main.py --divisao test --experimento`. Ela produziu dois conjuntos de arquivos.
+
+**Uma pasta por execução:** `resultados/test_<config>_conectividade<4|8>/`, ou seja, 8 pastas
+(C0 a C3 × conectividade 4 e 8). Cada uma contém:
+
+| Arquivo | Conteúdo | Linhas |
+|---|---|---|
+| `resumo.csv` | Uma linha por foto: tamanho, tipo de fundo, componentes brutos, contados × gabarito, erro de contagem, VP, FP, FN, precisão, revocação, F1, IoU médio, causas dos erros e tempo de cada etapa | 11 |
+| `medicoes.csv` | Uma linha por amendoim detectado: número, área, caixa (x, y, largura, altura), aspecto, preenchimento, centro, se casou com o gabarito (`correta`) e o IoU | de 176 (C2) a 472 (C0 c4) |
+| `imagens/` | Cada foto com o gabarito em vermelho e as detecções em verde, numeradas como em `medicoes.csv`. Só há imagens nas pastas da C2 e da C3 (`CONFIGURACOES_COM_IMAGENS` em `experimento.py`). As da C0 e da C1 têm só os CSVs | 11 |
+
+**Tabelas consolidadas** em `resultados/experimento/`:
+
+| Arquivo | Conteúdo | Linhas |
+|---|---|---|
+| `test_comparacao.csv` | Uma linha por configuração × conectividade × fundo (todos, escuro, madeira). Soma VP, FP, FN e as causas dos erros sobre as fotos do grupo e informa precisão, revocação, F1, se o critério F1 ≥ 0,80 foi atingido, MAE da contagem, componentes brutos e tempo médio por etapa. É a origem das tabelas 5.2 a 5.5 | 24 |
+| `test_por_foto.csv` | Todas as linhas de `resumo.csv` das 8 execuções reunidas em um só arquivo | 88 |
+| `test_rotulagem.csv` | Uma linha por foto × máscara (C1, C2) × conectividade. Compara a rotulagem manual com `cv2.connectedComponents` (número de componentes, partição idêntica, tempo de cada uma). É a origem das tabelas da seção 3 | 44 |
+
+Os arquivos `val_*` e as pastas `resultados/val_*` têm a mesma estrutura e foram gerados com
+`--divisao val`, durante o ajuste dos parâmetros.
+
 ## 3. Componente algorítmico: rotulagem de componentes conexos
 
 Implementação manual em `src/rotulagem.py`, com o **algoritmo de duas passagens e tabela de
