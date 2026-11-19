@@ -39,18 +39,18 @@ o fundo de madeira.
 1. Conversão para LAB com remoção do canal alpha e uso do canal **b** (azul ↔ amarelo), suavizado com gaussiano 7×7. O
    amendoim é amarelado e o prato é neutro, então o canal b separa os amendoins sem depender da
    iluminação.
-2. **Otsu calculado só na região de interesse** (pixels que não são o preto dos cantos). Com os
+2. Otsu calculado só na região de interesse (pixels que não são o preto dos cantos). Com os
    cantos incluídos, o Otsu separava "preto × prato" em vez de "prato × amendoim".
-3. **Remoção de sombras** entre grãos encostados: pixels mais escuros de uma média local que a média geral
+3. Remoção de sombras entre grãos encostados: pixels mais escuros de uma média local que a média geral
    por mais de um valor de 10 níveis são apagados, o que abre uma fenda entre os grãos.
-5. **Morfologia** com elipse 5×5: abertura (2 iterações) para remover ruído e fechamento
+5. Morfologia com elipse 5×5: abertura (2 iterações) para remover ruído e fechamento
    (1 iteração) para tapar buracos.
 
 **Fundo de madeira:** a cor do amendoim é praticamente igual à da madeira (canal b de 169 a 173),
-então a separação usa **bordas**:
+então a separação usa bordas:
 1. Redução da foto para 1000 px de largura (só nesta etapa), conversão para o padrão LAB e aplicação de mediana,
    o que apaga os veios finos da madeira e preserva as bordas fortes dos grãos.
-2. **Magnitude do gradiente de Sobel** (x e y) com limiar 20.
+2. Magnitude do gradiente de Sobel (x e y) com limiar 20.
 3. É efetuado um contraste de borda e de fundo em separados, criando duas máscaras diferentes.
 4. Efetuado bitwise para alterar as cores e floodfill para espalhar o resultado para o fundo inteiro.
 5. Por fim, é realizadao uma morfologia de abertura com elipse 25x25 em sincronia com a junção das máscaras de borda e fundo.
