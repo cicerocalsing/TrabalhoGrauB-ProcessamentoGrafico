@@ -31,31 +31,30 @@ de área → avaliação → desenho e tabelas**.
 
 ### 2.1 Segmentação
 
-O tipo de fundo é detectado automaticamente pelos cantos da foto (`tem_fundo_escuro`): se mais
-de 50% dos pixels dos quatro cantos tiverem brilho < 15, a foto é de prato escuro.
+O tipo de fundo é detectado automaticamente pelos cantos da foto (`tem_fundo_escuro`). Caso detecte uma grande
+quantidade de pixeis escuros ele decidia utilizar a função de fundo escuro, caso contrário decide utilizar a função para
+o fundo de madeira.
 
 **Fundo escuro (prato):**
-1. Conversão para LAB e uso do canal **b** (azul ↔ amarelo), suavizado com gaussiano 7×7. O
-   amendoim é amarelado e o prato é neutro, então o canal b separa os doin=is sem depender da
+1. Conversão para LAB com remoção do canal alpha e uso do canal **b** (azul ↔ amarelo), suavizado com gaussiano 7×7. O
+   amendoim é amarelado e o prato é neutro, então o canal b separa os amendoins sem depender da
    iluminação.
 2. **Otsu calculado só na região de interesse** (pixels que não são o preto dos cantos). Com os
    cantos incluídos, o Otsu separava "preto × prato" em vez de "prato × amendoim".
-3. **Remoção de sombras** entre grãos encostados: pixels mais escuros que a média da vizinhança
-   (gaussiano σ = 12) por mais de 10 níveis são apagados, o que abre uma fenda entre os grãos.
-4. **Morfologia** com elipse 5×5: abertura (2 iterações) para remover ruído e fechamento
+3. **Remoção de sombras** entre grãos encostados: pixels mais escuros de uma média local que a média geral
+   por mais de um valor de 10 níveis são apagados, o que abre uma fenda entre os grãos.
+5. **Morfologia** com elipse 5×5: abertura (2 iterações) para remover ruído e fechamento
    (1 iteração) para tapar buracos.
 
 **Fundo de madeira:** a cor do amendoim é praticamente igual à da madeira (canal b de 169 a 173),
 então a separação usa **bordas**:
-1. Redução da foto para 1000 px de largura (só nesta etapa) e uso do canal L com **mediana 11×11**,
-   que apaga os veios finos da madeira e preserva as bordas fortes dos grãos.
+1. Redução da foto para 1000 px de largura (só nesta etapa), conversão para o padrão LAB e aplicação de mediana,
+   o que apaga os veios finos da madeira e preserva as bordas fortes dos grãos.
 2. **Magnitude do gradiente de Sobel** (x e y) com limiar 20.
-3. **Fechamento** com elipse 15 para fechar o contorno de cada grão e **preenchimento**
-   (`floodFill` a partir do canto) para marcar o interior das curvas fechadas.
-4. **Abertura** com elipse 25 para remover bordas soltas e volta da máscara ao tamanho original.
+3. É efetuado um contraste de borda e de fundo em separados, criando duas máscaras diferentes.
+4. Efetuado bitwise para alterar as cores e floodfill para espalhar o resultado para o fundo inteiro.
+5. Por fim, é realizadao uma morfologia de abertura com elipse 25x25 em sincronia com a junção das máscaras de borda e fundo.
 
-Todos os parâmetros estão em `src/config.py`, com comentários, e foram definidos olhando apenas
-as fotos de val.
 
 ### 2.2 Medição e filtro de área
 
